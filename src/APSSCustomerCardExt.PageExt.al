@@ -1,15 +1,3 @@
-tableextension 50100 "APSS Customer Ext" extends Customer
-{
-    fields
-    {
-        field(50100; "APSS External ID"; Text[50])
-        {
-            Caption = 'APSS External ID';
-            DataClassification = CustomerContent;
-        }
-    }
-}
-
 pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
 {
     layout
@@ -36,13 +24,13 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
-                ToolTip = 'Test a REST API GET Request.';
+                ToolTip = 'Test a REST API GET request.';
 
                 trigger OnAction()
                 var
-                    RestApiMgt: Codeunit "APSS REST API Management";
+                    RestApiManagement: Codeunit "APSS REST API Management";
                 begin
-                    RestApiMgt.FetchExternalData();
+                    RestApiManagement.FetchExternalData();
                 end;
             }
             action(APSS_TestRestApiPost)
@@ -53,14 +41,24 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 Promoted = true;
                 PromotedCategory = Process;
                 PromotedIsBig = true;
-                ToolTip = 'Test a REST API POST Request.';
+                ToolTip = 'Test a REST API POST request.';
 
                 trigger OnAction()
                 var
-                    RestApiMgt: Codeunit "APSS REST API Management";
+                    RestApiManagement: Codeunit "APSS REST API Management";
                 begin
-                    RestApiMgt.SendDataToExternalApi(Rec."No.", Rec.Name);
+                    RestApiManagement.SendDataToExternalApi(Rec."No.", Rec.Name);
                 end;
+            }
+            action(APSS_ExternalUsers)
+            {
+                ApplicationArea = All;
+                Caption = 'External Users';
+                Image = Users;
+                Promoted = true;
+                PromotedCategory = Process;
+                RunObject = page "APSS External Users";
+                ToolTip = 'View and synchronize users from the external REST API.';
             }
         }
     }
