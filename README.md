@@ -18,7 +18,7 @@ This is a standalone, production-ready Microsoft Dynamics 365 Business Central A
 ---
 
 ## Interns Workspace
-- **[Quy's English Name]** (Branch: `feature/quy-al-rest-api`)
-- **[Nam's English Name]** (Branch: `feature/nam-al-rest-api`)
+- **Will** (Branch: `feature/will-al-rest-api`)
+- **Daniel** (Branch: `feature/daniel-al-rest-api`)
 
 *(Assignments will be provided later)*
