@@ -88,6 +88,19 @@ codeunit 50100 "APSS REST API Management"
         DeleteMissingExternalUsers(TempExternalUser, DeletedCount);
     end;
 
+    procedure ClearExternalUsers(): Integer
+    var
+        ExternalUser: Record "APSS External User";
+        DeletedCount: Integer;
+    begin
+        DeletedCount := ExternalUser.Count();
+        if DeletedCount = 0 then
+            exit(0);
+
+        ExternalUser.DeleteAll(true);
+        exit(DeletedCount);
+    end;
+
     local procedure ParseExternalUsers(ResponseText: Text; var TempExternalUser: Record "APSS External User" temporary)
     var
         UserArray: JsonArray;

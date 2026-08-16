@@ -1,4 +1,4 @@
-table 50101 "APSS External User"
+table 50149 "APSS External User"
 {
     Caption = 'External User';
     DataClassification = CustomerContent;

@@ -1,4 +1,4 @@
-page 50101 "APSS External Users"
+page 50149 "APSS External Users"
 {
     ApplicationArea = All;
     Caption = 'External Users';
@@ -7,6 +7,7 @@ page 50101 "APSS External Users"
     InsertAllowed = false;
     ModifyAllowed = false;
     PageType = List;
+    CardPageId = "APSS External User Card";
     SourceTable = "APSS External User";
     SourceTableView = sorting("External ID") order(ascending);
     UsageCategory = Lists;
@@ -97,6 +98,17 @@ page 50101 "APSS External Users"
     {
         area(Processing)
         {
+            action(OpenDetails)
+            {
+                ApplicationArea = All;
+                Caption = 'Open Details';
+                Image = View;
+                Promoted = true;
+                PromotedCategory = Process;
+                RunObject = page "APSS External User Card";
+                RunPageLink = "External ID" = field("External ID");
+                ToolTip = 'Open a detailed view of the selected external user.';
+            }
             action(Synchronize)
             {
                 ApplicationArea = All;
@@ -120,9 +132,38 @@ page 50101 "APSS External Users"
                     Message(SyncCompletedMsg, InsertedCount, ModifiedCount, DeletedCount);
                 end;
             }
+            action(ClearAllUsers)
+            {
+                ApplicationArea = All;
+                Caption = 'Clear All Users';
+                Image = Delete;
+                ToolTip = 'Delete all synchronized external users so the import can be demonstrated again.';
+
+                trigger OnAction()
+                var
+                    ExternalUser: Record "APSS External User";
+                    RestApiManagement: Codeunit "APSS REST API Management";
+                    DeletedCount: Integer;
+                begin
+                    if ExternalUser.IsEmpty() then begin
+                        Message(NoUsersMsg);
+                        exit;
+                    end;
+
+                    if not Confirm(ClearAllUsersQst, false, ExternalUser.Count()) then
+                        exit;
+
+                    DeletedCount := RestApiManagement.ClearExternalUsers();
+                    CurrPage.Update(false);
+                    Message(ClearCompletedMsg, DeletedCount);
+                end;
+            }
         }
     }
 
     var
+        ClearAllUsersQst: Label 'Delete all %1 synchronized external users?', Comment = '%1 = number of external user records';
+        ClearCompletedMsg: Label '%1 external users were deleted.', Comment = '%1 = number of deleted external user records';
+        NoUsersMsg: Label 'There are no external users to delete.';
         SyncCompletedMsg: Label 'Synchronization completed. Inserted: %1, updated: %2, deleted: %3.', Comment = '%1 = inserted record count, %2 = updated record count, %3 = deleted record count';
 }
