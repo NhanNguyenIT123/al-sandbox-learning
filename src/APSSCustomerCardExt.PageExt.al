@@ -21,9 +21,6 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 ApplicationArea = All;
                 Caption = 'Test REST API GET';
                 Image = Web;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
                 ToolTip = 'Test a REST API GET request.';
 
                 trigger OnAction()
@@ -38,16 +35,13 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 ApplicationArea = All;
                 Caption = 'Test REST API POST';
                 Image = Web;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
                 ToolTip = 'Test a REST API POST request.';
 
                 trigger OnAction()
                 var
                     RestApiManagement: Codeunit "APSS REST API Management";
                 begin
-                    RestApiManagement.SendDataToExternalApi(Rec."No.", Rec.Name);
+                    RestApiManagement.SendDataToExternalApi();
                 end;
             }
             action(APSS_ExternalUsers)
@@ -55,10 +49,20 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 ApplicationArea = All;
                 Caption = 'External Users';
                 Image = Users;
-                Promoted = true;
-                PromotedCategory = Process;
                 RunObject = page "APSS External Users";
                 ToolTip = 'View and synchronize users from the external REST API.';
+            }
+        }
+        addlast(Category_Process)
+        {
+            actionref(APSS_TestRestApiGet_Promoted; APSS_TestRestApiGet)
+            {
+            }
+            actionref(APSS_TestRestApiPost_Promoted; APSS_TestRestApiPost)
+            {
+            }
+            actionref(APSS_ExternalUsers_Promoted; APSS_ExternalUsers)
+            {
             }
         }
     }

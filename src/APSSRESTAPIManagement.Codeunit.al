@@ -32,17 +32,16 @@ codeunit 50100 "APSS REST API Management"
         Message(FetchSucceededMsg, Title);
     end;
 
-    procedure SendDataToExternalApi(CustomerNo: Code[20]; CustomerName: Text[100])
+    procedure SendDataToExternalApi()
     var
         Client: HttpClient;
         Content: HttpContent;
         Headers: HttpHeaders;
         ResponseMessage: HttpResponseMessage;
-        ResponseString: Text;
         JObject: JsonObject;
         PayloadText: Text;
     begin
-        JObject.Add('title', StrSubstNo(CustomerTitleLbl, CustomerNo, CustomerName));
+        JObject.Add('title', PostTitleLbl);
         JObject.Add('body', PostBodyLbl);
         JObject.Add('userId', 1);
 
@@ -58,8 +57,7 @@ codeunit 50100 "APSS REST API Management"
         if not ResponseMessage.IsSuccessStatusCode() then
             Error(HttpStatusErr, ResponseMessage.HttpStatusCode(), PostsEndpointLbl);
 
-        ResponseMessage.Content().ReadAs(ResponseString);
-        Message(PostSucceededMsg, ResponseString);
+        Message(PostSucceededMsg);
     end;
 
     procedure SyncExternalUsers(var InsertedCount: Integer; var ModifiedCount: Integer; var DeletedCount: Integer)
@@ -255,11 +253,15 @@ codeunit 50100 "APSS REST API Management"
 
     local procedure GetRequiredText(JsonObject: JsonObject; PropertyName: Text; MaximumLength: Integer; ItemIndex: Integer): Text
     var
+        JsonToken: JsonToken;
         PropertyValue: Text;
     begin
+        if not JsonObject.Get(PropertyName, JsonToken) then
+            Error(MissingPropertyErr, PropertyName, ItemIndex);
+
         PropertyValue := GetOptionalText(JsonObject, PropertyName, MaximumLength, ItemIndex);
         if PropertyValue = '' then
-            Error(MissingPropertyErr, PropertyName, ItemIndex);
+            Error(EmptyPropertyErr, PropertyName, ItemIndex);
 
         exit(PropertyValue);
     end;
@@ -319,7 +321,7 @@ codeunit 50100 "APSS REST API Management"
         DuplicateIdErr: Label 'The external API returned duplicate user ID %1.', Comment = '%1 = external user ID';
         EmptyResponseErr: Label 'The external API returned an empty user list. Existing data was not changed.';
         ContentTypeHeaderLbl: Label 'Content-Type', Locked = true;
-        CustomerTitleLbl: Label 'Customer %1: %2', Comment = '%1 = customer number, %2 = customer name';
+        EmptyPropertyErr: Label 'Required property %1 on external user at array index %2 is empty.', Comment = '%1 = JSON property name, %2 = zero-based JSON array index';
         FetchSucceededMsg: Label 'Success! Fetched title: %1', Comment = '%1 = title returned by the external API';
         HttpPostFailedErr: Label 'The HTTP POST request to %1 failed. Verify the endpoint, network connection, and the extension HTTP client permission.', Comment = '%1 = API endpoint URL';
         HttpRequestFailedErr: Label 'The HTTP GET request to %1 failed. Verify the endpoint, network connection, and the extension HTTP client permission.', Comment = '%1 = API endpoint URL';
@@ -333,7 +335,8 @@ codeunit 50100 "APSS REST API Management"
         MissingResponsePropertyErr: Label 'Property %1 is missing from the response from %2.', Comment = '%1 = JSON property name, %2 = API endpoint URL';
         PostBodyLbl: Label 'Test data sent from Business Central';
         PostsEndpointLbl: Label 'https://jsonplaceholder.typicode.com/posts', Locked = true;
-        PostSucceededMsg: Label 'Success! POST response:\%1', Comment = '%1 = response body returned by the external API';
+        PostSucceededMsg: Label 'The test POST request succeeded.';
+        PostTitleLbl: Label 'Business Central REST API test';
         PropertyTooLongErr: Label 'Property %1 on external user at array index %2 contains %3 characters; the maximum supported length is %4.', Comment = '%1 = JSON property name, %2 = zero-based JSON array index, %3 = actual length, %4 = maximum length';
         TodoEndpointLbl: Label 'https://jsonplaceholder.typicode.com/todos/1', Locked = true;
         UsersEndpointLbl: Label 'https://jsonplaceholder.typicode.com/users', Locked = true;

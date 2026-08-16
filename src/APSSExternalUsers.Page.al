@@ -103,8 +103,6 @@ page 50149 "APSS External Users"
                 ApplicationArea = All;
                 Caption = 'Open Details';
                 Image = View;
-                Promoted = true;
-                PromotedCategory = Process;
                 RunObject = page "APSS External User Card";
                 RunPageLink = "External ID" = field("External ID");
                 ToolTip = 'Open a detailed view of the selected external user.';
@@ -114,10 +112,6 @@ page 50149 "APSS External Users"
                 ApplicationArea = All;
                 Caption = 'Synchronize';
                 Image = Refresh;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
-                PromotedOnly = true;
                 ToolTip = 'Fetch and synchronize users from the external REST API.';
 
                 trigger OnAction()
@@ -157,6 +151,15 @@ page 50149 "APSS External Users"
                     CurrPage.Update(false);
                     Message(ClearCompletedMsg, DeletedCount);
                 end;
+            }
+        }
+        area(Promoted)
+        {
+            actionref(OpenDetails_Promoted; OpenDetails)
+            {
+            }
+            actionref(Synchronize_Promoted; Synchronize)
+            {
             }
         }
     }
