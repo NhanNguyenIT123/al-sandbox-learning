@@ -19,14 +19,14 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
             field("APSS External ID"; Rec."APSS External ID")
             {
                 ApplicationArea = All;
-                ToolTip = 'Specifies the APSS External ID for the customer.';
+                ToolTip = 'Specifies the external ID of the customer in the APSS system.';
             }
         }
     }
 
     actions
     {
-        addlast(processing)
+        addlast(Processing)
         {
             action(APSS_TestRestApiGet)
             {
@@ -35,8 +35,7 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 Image = Web;
                 Promoted = true;
                 PromotedCategory = Process;
-                PromotedIsBig = true;
-                ToolTip = 'Test a REST API GET Request.';
+                ToolTip = 'Tests a REST API GET request using the APSS REST API Management codeunit.';
 
                 trigger OnAction()
                 var
@@ -45,6 +44,7 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                     RestApiMgt.FetchExternalData();
                 end;
             }
+
             action(APSS_TestRestApiPost)
             {
                 ApplicationArea = All;
@@ -52,8 +52,7 @@ pageextension 50100 "APSS Customer Card Ext" extends "Customer Card"
                 Image = Web;
                 Promoted = true;
                 PromotedCategory = Process;
-                PromotedIsBig = true;
-                ToolTip = 'Test a REST API POST Request.';
+                ToolTip = 'Tests a REST API POST request using the current customer information.';
 
                 trigger OnAction()
                 var
