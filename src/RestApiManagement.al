@@ -1,5 +1,9 @@
 codeunit 50100 "APSS REST API Management"
 {
+    /// <summary>
+    /// Fetches the Todo collection from the external API and synchronizes
+    /// valid Todo records into Business Central.
+    /// </summary>
     procedure FetchTodoCollection()
     var
         Client: HttpClient;
@@ -8,6 +12,10 @@ codeunit 50100 "APSS REST API Management"
         ClientErrorText: Text;
         TempExternalTodo: Record "APSS External Todo" temporary;
         JsonArrayParser: Codeunit "APSS Json Array Parser";
+        APIErrorLogMgt: Codeunit "APSS API Error Log Mgt.";
+        ProcessedCount: Integer;
+        SuccessfulCount: Integer;
+        FailedCount: Integer;
     begin
         ClearLastError();
 
@@ -17,33 +25,85 @@ codeunit 50100 "APSS REST API Management"
         then begin
             ClientErrorText := GetLastErrorText();
 
-            if ClientErrorText <> '' then
-                Error(
-                    'Unable to fetch the Todo collection. Details: %1',
-                    ClientErrorText);
+            if ClientErrorText = '' then
+                ClientErrorText :=
+                    'The HTTP GET request failed without a detailed error message.';
 
-            Error(
-                'Unable to fetch the Todo collection because the HTTP GET request failed.');
+            APIErrorLogMgt.LogHttpError(
+                'JSONPlaceholder Todos',
+                ClientErrorText,
+                0);
+
+            Message(
+                'Todo synchronization failed. The error has been recorded in API Error Logs.');
+
+            exit;
         end;
 
-        if not ResponseMessage.IsSuccessStatusCode() then
-            Error(
-                'Unable to fetch the Todo collection. HTTP status code: %1.',
+        if not ResponseMessage.IsSuccessStatusCode() then begin
+            APIErrorLogMgt.LogHttpError(
+                'JSONPlaceholder Todos',
+                StrSubstNo(
+                    'The Todo API returned HTTP status code %1.',
+                    ResponseMessage.HttpStatusCode()),
                 ResponseMessage.HttpStatusCode());
 
-        if not ResponseMessage.Content().ReadAs(ResponseText) then
-            Error('Unable to read the Todo collection response body.');
+            Message(
+                'Todo synchronization failed with HTTP status code %1. The error has been recorded in API Error Logs.',
+                ResponseMessage.HttpStatusCode());
 
-        if ResponseText.Trim() = '' then
-            Error('The Todo collection response body is empty.');
+            exit;
+        end;
 
-        JsonArrayParser.ParseTodoArray(
+        if not ResponseMessage.Content().ReadAs(ResponseText) then begin
+            APIErrorLogMgt.LogHttpError(
+                'JSONPlaceholder Todos',
+                'Unable to read the Todo collection response body.',
+                ResponseMessage.HttpStatusCode());
+
+            Message(
+                'Todo synchronization failed while reading the API response. The error has been recorded in API Error Logs.');
+
+            exit;
+        end;
+
+        if ResponseText.Trim() = '' then begin
+            APIErrorLogMgt.LogHttpError(
+                'JSONPlaceholder Todos',
+                'The Todo collection response body is empty.',
+                ResponseMessage.HttpStatusCode());
+
+            Message(
+                'Todo synchronization failed because the API returned an empty response. The error has been recorded in API Error Logs.');
+
+            exit;
+        end;
+
+        if not JsonArrayParser.ParseTodoArray(
             ResponseText,
-            TempExternalTodo);
+            TempExternalTodo,
+            ProcessedCount,
+            SuccessfulCount,
+            FailedCount)
+        then begin
+            Message(
+                'Todo synchronization failed because the API response could not be processed. The error has been recorded in API Error Logs.');
+
+            exit;
+        end;
 
         PersistTodos(TempExternalTodo);
+
+        ShowSyncSummary(
+            ProcessedCount,
+            SuccessfulCount,
+            FailedCount);
     end;
 
+    /// <summary>
+    /// Inserts new Todo records and updates existing records using
+    /// the external Todo ID as the primary key.
+    /// </summary>
     local procedure PersistTodos(
         var TempExternalTodo: Record "APSS External Todo" temporary)
     var
@@ -61,24 +121,73 @@ codeunit 50100 "APSS REST API Management"
             then begin
                 ExternalTodo."External User ID" :=
                     TempExternalTodo."External User ID";
-                ExternalTodo.Title := TempExternalTodo.Title;
-                ExternalTodo.Completed := TempExternalTodo.Completed;
-                ExternalTodo."Last Synced At" := SyncDateTime;
+
+                ExternalTodo.Title :=
+                    TempExternalTodo.Title;
+
+                ExternalTodo.Completed :=
+                    TempExternalTodo.Completed;
+
+                ExternalTodo."Last Synced At" :=
+                    SyncDateTime;
+
                 ExternalTodo.Modify(true);
             end else begin
                 ExternalTodo.Init();
+
                 ExternalTodo."External Todo ID" :=
                     TempExternalTodo."External Todo ID";
+
                 ExternalTodo."External User ID" :=
                     TempExternalTodo."External User ID";
-                ExternalTodo.Title := TempExternalTodo.Title;
-                ExternalTodo.Completed := TempExternalTodo.Completed;
-                ExternalTodo."Last Synced At" := SyncDateTime;
+
+                ExternalTodo.Title :=
+                    TempExternalTodo.Title;
+
+                ExternalTodo.Completed :=
+                    TempExternalTodo.Completed;
+
+                ExternalTodo."Last Synced At" :=
+                    SyncDateTime;
+
                 ExternalTodo.Insert(true);
             end;
         until TempExternalTodo.Next() = 0;
     end;
 
+    /// <summary>
+    /// Displays the result of the Todo synchronization.
+    /// </summary>
+    local procedure ShowSyncSummary(
+        ProcessedCount: Integer;
+        SuccessfulCount: Integer;
+        FailedCount: Integer)
+    begin
+        if FailedCount = 0 then begin
+            Message(
+                'Todo synchronization completed successfully.\' +
+                'Records processed: %1.\' +
+                'Records synchronized: %2.',
+                ProcessedCount,
+                SuccessfulCount);
+
+            exit;
+        end;
+
+        Message(
+            'Todo synchronization completed with errors.\' +
+            'Records processed: %1.\' +
+            'Records synchronized: %2.\' +
+            'Records failed: %3.\' +
+            'See API Error Logs for details.',
+            ProcessedCount,
+            SuccessfulCount,
+            FailedCount);
+    end;
+
+    /// <summary>
+    /// Tests a simple GET request against the training REST API.
+    /// </summary>
     procedure FetchExternalData()
     var
         Client: HttpClient;
@@ -109,7 +218,10 @@ codeunit 50100 "APSS REST API Management"
         if not JObject.ReadFrom(ResponseString) then
             Error('The REST API returned invalid JSON.');
 
-        if not JObject.Get('title', JToken) then
+        if not JObject.Get(
+            'title',
+            JToken)
+        then
             Error('The REST API response does not contain a title.');
 
         if not JToken.IsValue() then
@@ -130,6 +242,9 @@ codeunit 50100 "APSS REST API Management"
             Title);
     end;
 
+    /// <summary>
+    /// Tests a POST request using the current Business Central customer.
+    /// </summary>
     procedure SendDataToExternalApi(
         CustomerNo: Code[20];
         CustomerName: Text[100])
@@ -162,6 +277,7 @@ codeunit 50100 "APSS REST API Management"
 
         Content.GetHeaders(Headers);
         Headers.Clear();
+
         Headers.Add(
             'Content-Type',
             'application/json; charset=utf-8');
