@@ -161,6 +161,41 @@ page 50149 "APSS External Users"
                 RunObject = page "APSS API Error Log";
                 ToolTip = 'View errors captured during external API synchronization.';
             }
+            group(SimulateErrors)
+            {
+                Caption = 'Simulate Errors';
+
+                action(Simulate404Error)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Simulate 404 Error';
+                    Image = Error;
+                    ToolTip = 'Add a demonstration HTTP 404 entry to the API Error Log without sending an external request.';
+
+                    trigger OnAction()
+                    var
+                        RestApiManagement: Codeunit "APSS REST API Management";
+                    begin
+                        RestApiManagement.SimulateHttpStatusError(404);
+                        Message(HttpErrorSimulatedMsg, 404);
+                    end;
+                }
+                action(Simulate500Error)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Simulate 500 Error';
+                    Image = Error;
+                    ToolTip = 'Add a demonstration HTTP 500 entry to the API Error Log without sending an external request.';
+
+                    trigger OnAction()
+                    var
+                        RestApiManagement: Codeunit "APSS REST API Management";
+                    begin
+                        RestApiManagement.SimulateHttpStatusError(500);
+                        Message(HttpErrorSimulatedMsg, 500);
+                    end;
+                }
+            }
         }
         area(Promoted)
         {
@@ -179,6 +214,7 @@ page 50149 "APSS External Users"
     var
         ClearAllUsersQst: Label 'Delete all %1 synchronized external users?', Comment = '%1 = number of external user records';
         ClearCompletedMsg: Label '%1 external users were deleted.', Comment = '%1 = number of deleted external user records';
+        HttpErrorSimulatedMsg: Label 'Simulated HTTP status %1 was added to the API Error Log.', Comment = '%1 = simulated HTTP status code';
         NoUsersMsg: Label 'There are no external users to delete.';
         SyncCompletedMsg: Label 'Synchronization completed. Inserted: %1, updated: %2, deleted: %3, errors logged: %4.', Comment = '%1 = inserted record count, %2 = updated record count, %3 = deleted record count, %4 = logged error count';
 }

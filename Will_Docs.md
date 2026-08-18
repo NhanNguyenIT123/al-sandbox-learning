@@ -60,5 +60,8 @@ The Error Log page is read-only. Insert and delete operations are performed thro
 2. Review the inserted, updated, deleted, and errors-logged counts.
 3. Choose **API Error Log** to inspect handled failures.
 4. Use **Clear Log** when a clean error-log demonstration is required.
+5. Choose **Simulate 404 Error** or **Simulate 500 Error** on the External Users page to add deterministic demo entries without depending on a failing external service.
+
+The simulation actions use the same HTTP status logging path as a real non-success response. They do not send an external request, and each log message explicitly identifies the entry as simulated.
 
 Outbound calls require **Allow HttpClient Requests** to be enabled for the extension.

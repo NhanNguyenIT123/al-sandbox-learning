@@ -17,6 +17,7 @@ This is a standalone, production-ready Microsoft Dynamics 365 Business Central A
 - **External User Synchronization**: Fetches users from JSONPlaceholder, validates each user, and synchronizes valid typed records without stopping on handled item errors.
 - **External Users Pages**: Read-only list and detail card for inspecting contact, company, address, coordinate, and synchronization data.
 - **API Error Log**: Stores handled HTTP, response, and user-validation failures without interrupting the synchronization action.
+- **HTTP Error Simulation**: Adds deterministic 404 and 500 demonstration entries through the production HTTP status logging path without calling an unreliable failing service.
 
 ---
 

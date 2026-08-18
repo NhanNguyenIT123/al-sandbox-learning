@@ -97,7 +97,7 @@ codeunit 50100 "APSS REST API Management"
         end;
 
         if not ResponseMessage.IsSuccessStatusCode() then begin
-            LogApiError(UsersResourceLbl, SynchronizeOperationLbl, UsersEndpointLbl, 0, -1, ResponseMessage.HttpStatusCode(), HttpErrorTypeLbl,
+            LogHttpStatusError(SynchronizeOperationLbl, UsersEndpointLbl, ResponseMessage.HttpStatusCode(),
                 StrSubstNo(HttpStatusErr, ResponseMessage.HttpStatusCode(), UsersEndpointLbl));
             ErrorCount += 1;
             exit;
@@ -116,6 +116,19 @@ codeunit 50100 "APSS REST API Management"
         UpsertExternalUsers(TempExternalUser, SyncDateTime, InsertedCount, ModifiedCount);
         if AllowDelete then
             DeleteMissingExternalUsers(TempExternalUser, DeletedCount);
+    end;
+
+    /// <summary>
+    /// Adds a deterministic demonstration entry for HTTP status 404 or 500 without sending an external request.
+    /// </summary>
+    /// <param name="HttpStatusCode">Specifies the simulated HTTP status code. Supported values are 404 and 500.</param>
+    procedure SimulateHttpStatusError(HttpStatusCode: Integer)
+    begin
+        if (HttpStatusCode <> 404) and (HttpStatusCode <> 500) then
+            Error(UnsupportedSimulationStatusErr, HttpStatusCode);
+
+        LogHttpStatusError(SimulationOperationLbl, SimulationEndpointLbl, HttpStatusCode,
+            StrSubstNo(SimulatedHttpStatusErr, HttpStatusCode));
     end;
 
     /// <summary>
@@ -178,6 +191,18 @@ codeunit 50100 "APSS REST API Management"
         ApiErrorLog."Error Type" := ErrorType;
         ApiErrorLog."Error Message" := CopyStr(ErrorMessage, 1, MaxStrLen(ApiErrorLog."Error Message"));
         ApiErrorLog.Insert(true);
+    end;
+
+    /// <summary>
+    /// Writes an HTTP status failure through the common API Error Log path.
+    /// </summary>
+    /// <param name="Operation">Specifies the integration operation.</param>
+    /// <param name="Endpoint">Specifies the related endpoint.</param>
+    /// <param name="HttpStatusCode">Specifies the HTTP status code.</param>
+    /// <param name="ErrorMessage">Specifies the real or simulated failure details.</param>
+    local procedure LogHttpStatusError(Operation: Text[50]; Endpoint: Text[250]; HttpStatusCode: Integer; ErrorMessage: Text)
+    begin
+        LogApiError(UsersResourceLbl, Operation, Endpoint, 0, -1, HttpStatusCode, HttpErrorTypeLbl, ErrorMessage);
     end;
 
     /// <summary>
@@ -573,9 +598,13 @@ codeunit 50100 "APSS REST API Management"
         PropertyTooLongErr: Label 'Property %1 on external user at array index %2 contains %3 characters; the maximum supported length is %4.', Comment = '%1 = JSON property name, %2 = zero-based JSON array index, %3 = actual length, %4 = maximum length';
         ReadResponseFailedErr: Label 'The external API response body could not be read. Existing data was not changed.';
         ResponseErrorTypeLbl: Label 'Response', Locked = true;
+        SimulatedHttpStatusErr: Label 'Demo only: simulated HTTP status %1. No external request was sent.', Comment = '%1 = simulated HTTP status code';
+        SimulationEndpointLbl: Label 'https://example.invalid/users', Locked = true;
+        SimulationOperationLbl: Label 'HTTP Error Simulation', Locked = true;
         SynchronizeOperationLbl: Label 'Synchronize', Locked = true;
         TodoEndpointLbl: Label 'https://jsonplaceholder.typicode.com/todos/1', Locked = true;
         UnknownUserValidationErr: Label 'The external user at array index %1 could not be validated.', Comment = '%1 = zero-based JSON array index';
+        UnsupportedSimulationStatusErr: Label 'HTTP status %1 is not supported for this demonstration. Use 404 or 500.', Comment = '%1 = unsupported HTTP status code';
         UsersResourceLbl: Label 'Users', Locked = true;
         UsersEndpointLbl: Label 'https://jsonplaceholder.typicode.com/users', Locked = true;
         ValidationErrorTypeLbl: Label 'Validation', Locked = true;
