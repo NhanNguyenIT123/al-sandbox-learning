@@ -4,6 +4,10 @@ codeunit 50101 "APSS Json Array Parser"
     begin
     end;
 
+    /// <summary>
+    /// Parses a sample JSON array and displays the title of each item.
+    /// </summary>
+    /// <param name="JsonArrayText">Specifies the JSON array text to parse.</param>
     procedure ParseJsonArrayExample(JsonArrayText: Text)
     var
         JArray: JsonArray;
@@ -19,6 +23,12 @@ codeunit 50101 "APSS Json Array Parser"
         Message(ArrayItemsMsg, Output.ToText());
     end;
 
+    /// <summary>
+    /// Reads and formats the title of one JSON array item.
+    /// </summary>
+    /// <param name="JsonArray">Specifies the source JSON array.</param>
+    /// <param name="Index">Specifies the zero-based array index.</param>
+    /// <returns>The formatted item description.</returns>
     local procedure GetArrayItemText(JsonArray: JsonArray; Index: Integer): Text
     var
         JsonObject: JsonObject;

@@ -118,12 +118,13 @@ page 50149 "APSS External Users"
                 var
                     RestApiManagement: Codeunit "APSS REST API Management";
                     DeletedCount: Integer;
+                    ErrorCount: Integer;
                     InsertedCount: Integer;
                     ModifiedCount: Integer;
                 begin
-                    RestApiManagement.SyncExternalUsers(InsertedCount, ModifiedCount, DeletedCount);
+                    RestApiManagement.SyncExternalUsers(InsertedCount, ModifiedCount, DeletedCount, ErrorCount);
                     CurrPage.Update(false);
-                    Message(SyncCompletedMsg, InsertedCount, ModifiedCount, DeletedCount);
+                    Message(SyncCompletedMsg, InsertedCount, ModifiedCount, DeletedCount, ErrorCount);
                 end;
             }
             action(ClearAllUsers)
@@ -152,6 +153,14 @@ page 50149 "APSS External Users"
                     Message(ClearCompletedMsg, DeletedCount);
                 end;
             }
+            action(ViewErrorLog)
+            {
+                ApplicationArea = All;
+                Caption = 'API Error Log';
+                Image = ErrorLog;
+                RunObject = page "APSS API Error Log";
+                ToolTip = 'View errors captured during external API synchronization.';
+            }
         }
         area(Promoted)
         {
@@ -161,6 +170,9 @@ page 50149 "APSS External Users"
             actionref(Synchronize_Promoted; Synchronize)
             {
             }
+            actionref(ViewErrorLog_Promoted; ViewErrorLog)
+            {
+            }
         }
     }
 
@@ -168,5 +180,5 @@ page 50149 "APSS External Users"
         ClearAllUsersQst: Label 'Delete all %1 synchronized external users?', Comment = '%1 = number of external user records';
         ClearCompletedMsg: Label '%1 external users were deleted.', Comment = '%1 = number of deleted external user records';
         NoUsersMsg: Label 'There are no external users to delete.';
-        SyncCompletedMsg: Label 'Synchronization completed. Inserted: %1, updated: %2, deleted: %3.', Comment = '%1 = inserted record count, %2 = updated record count, %3 = deleted record count';
+        SyncCompletedMsg: Label 'Synchronization completed. Inserted: %1, updated: %2, deleted: %3, errors logged: %4.', Comment = '%1 = inserted record count, %2 = updated record count, %3 = deleted record count, %4 = logged error count';
 }
